@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Cost Calculator</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            padding: 15px;
+            background: linear-gradient(to right, #202020, #0c0c0c);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        .instructions {
+            grid-column: 1 / -1;
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 10px;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .instructions ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+
+        .instructions li {
+            margin-bottom: 5px;
+            color: #ddd;
+        }
+
+        h1 {
+            text-align: center;
+            color: #ffae00;
+            margin-bottom: 15px;
+            grid-column: 1 / -1;
+            font-size: clamp(1.5rem, 2vw, 2rem);
+        }
+
+        .section-heading {
+            color: #ffae00;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #333;
+            grid-column: 1 / -1;
+        }
+
+        .input-section, .output-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .input-group {
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            margin-left: 5px;
+            color: #ffae00;
+            cursor: help;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.8rem;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            color: #ddd;
+            margin-bottom: 4px;
+            font-size: 0.9rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            background: #2a2a2a;
+            color: white;
+            height: 35px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #ff0000;
+            box-shadow: 0 0 0 1px #ff0000;
+        }
+
+        button {
+            padding: 8px;
+            border-radius: 8px;
+            background: #636363;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            height: 35px;
+        }
+
+        button:hover {
+            background: #0075ff;
+        }
+
+        .result {
+            background: #2a2a2a;
+            padding: 12px;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 0.9rem;
+        }
+
+        .result-row {
+            padding: 8px 0;
+            border-bottom: 1px solid #404040;
+        }
+
+        .result-row:last-child {
+            border-bottom: none;
+        }
+
+        .result p {
+            margin: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .result-value {
+            color: #0075ff;
+            font-weight: bold;
+        }
+
+        .chart-container {
+            aspect-ratio: 1;
+            width: 100%;
+            max-height: 300px;
+            margin-top: 10px;
+        }
+
+        .button-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                padding: 15px;
+            }
+
+            .chart-container {
+                max-height: 250px;
+            }
+        }
+
+         /* Adding new styles for history section */
+         .history-section {
+            grid-column: 1 / -1;
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .history-item {
+            background: #1a1a1a;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .history-details {
+            flex: 1;
+        }
+
+        .history-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .history-actions button {
+            padding: 4px 8px;
+            font-size: 0.8rem;
+        }
+
+        .button-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .timestamp {
+            color: #888;
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <h1>Product Cost Calculator</h1>
+
+        <div class="instructions">
+            <strong>Instructions:</strong>
+            <ul>
+                <li>Fill in all relevant costs for your product</li>
+                <li>Direct costs include materials and components</li>
+                <li>Indirect costs include utilities, rent, and equipment</li>
+                <li>Labor costs cover all worker-related expenses</li>
+                <li>Use the tooltips (?) for more information about each field</li>
+            </ul>
+        </div>
+
+        <div class="input-section">
+            <h2 class="section-heading">Enter Costs</h2>
+            
+            <div class="input-group">
+                <label for="directCosts">
+                    Direct Costs ($)
+                    <span class="tooltip">?
+                        <span class="tooltip-text">Materials, components, and other costs directly tied to production</span>
+                    </span>
+                </label>
+                <input type="number" id="directCosts" placeholder="Enter direct costs">
+            </div>
+
+            <div class="input-group">
+                <label for="indirectCosts">
+                    Indirect Costs ($)
+                    <span class="tooltip">?
+                        <span class="tooltip-text">Overhead costs like utilities, rent, and equipment depreciation</span>
+                    </span>
+                </label>
+                <input type="number" id="indirectCosts" placeholder="Enter indirect costs">
+            </div>
+
+            <div class="input-group">
+                <label for="laborCosts">
+                    Labor Costs ($)
+                    <span class="tooltip">?
+                        <span class="tooltip-text">Wages, benefits, and other employee-related expenses</span>
+                    </span>
+                </label>
+                <input type="number" id="laborCosts" placeholder="Enter labor costs">
+            </div>
+
+            <div class="input-group">
+                <label for="miscCosts">
+                    Miscellaneous Costs ($)
+                    <span class="tooltip">?
+                        <span class="tooltip-text">Any additional costs not covered in other categories</span>
+                    </span>
+                </label>
+                <input type="number" id="miscCosts" placeholder="Enter misc costs">
+            </div>
+
+            <div class="input-group">
+                <label for="units">
+                    Number of Units
+                    <span class="tooltip">?
+                        <span class="tooltip-text">Total number of products to be produced</span>
+                    </span>
+                </label>
+                <input type="number" id="units" placeholder="Enter number of units">
+            </div>
+
+            <div class="input-group">
+                <label for="tax">
+                    Tax Rate (%)
+                    <span class="tooltip">?
+                        <span class="tooltip-text">Applicable tax rate as a percentage</span>
+                    </span>
+                </label>
+                <input type="number" id="tax" placeholder="Enter tax rate">
+            </div>
+
+            <!-- <div class="button-container">
+                <button onclick="calculate()">Calculate</button>
+                <button onclick="clearFields()">Clear</button>
+            </div>
+        </div> -->
+
+        <div class="button-container">
+            <button onclick="calculate()">Calculate</button>
+            <button onclick="downloadData()">Download Data</button>
+            <button onclick="clearFields()">Clear</button>
+        </div>
+
+        <!-- Add history section after output section -->
+        <div class="history-section">
+            <h2 class="section-heading">Calculation History</h2>
+            <div id="history-list"></div>
+        </div>
+    </div>
+
+        <div class="output-section">
+            <h2 class="section-heading">Results</h2>
+            <div class="result" id="result"></div>
+            <div class="chart-container">
+                <canvas id="costBreakdownChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+
+    <script>
+
+   // Load history when page loads
+   window.onload = function() {
+            loadHistory();
+        };
+
+        function saveCalculation(data) {
+            let history = JSON.parse(localStorage.getItem('calculationHistory') || '[]');
+            
+            // Add timestamp to the calculation
+            data.timestamp = new Date().toLocaleString();
+            
+            // Add new calculation to the beginning of the array
+            history.unshift(data);
+            
+            // Keep only the last 5 calculations
+            history = history.slice(0, 5);
+            
+            localStorage.setItem('calculationHistory', JSON.stringify(history));
+            loadHistory();
+        }
+
+        function loadHistory() {
+            const history = JSON.parse(localStorage.getItem('calculationHistory') || '[]');
+            const historyList = document.getElementById('history-list');
+            historyList.innerHTML = '';
+
+            history.forEach((calc, index) => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                historyItem.innerHTML = `
+                    <div class="history-details">
+                        <div class="timestamp">${calc.timestamp}</div>
+                        <div>Total Cost: $${calc.total.toFixed(2)} | Units: ${calc.units} | Per Unit: $${calc.totalPerUnit.toFixed(2)}</div>
+                    </div>
+                    <div class="history-actions">
+                        <button onclick="loadCalculation(${index})">Load</button>
+                        <button onclick="deleteCalculation(${index})">Delete</button>
+                    </div>
+                `;
+                historyList.appendChild(historyItem);
+            });
+        }
+
+        function loadCalculation(index) {
+            const history = JSON.parse(localStorage.getItem('calculationHistory') || '[]');
+            const calc = history[index];
+            
+            document.getElementById('directCosts').value = calc.directCosts;
+            document.getElementById('indirectCosts').value = calc.indirectCosts;
+            document.getElementById('laborCosts').value = calc.laborCosts;
+            document.getElementById('miscCosts').value = calc.miscCosts;
+            document.getElementById('units').value = calc.units;
+            document.getElementById('tax').value = calc.taxRate;
+            
+            calculate();
+        }
+
+        function deleteCalculation(index) {
+            let history = JSON.parse(localStorage.getItem('calculationHistory') || '[]');
+            history.splice(index, 1);
+            localStorage.setItem('calculationHistory', JSON.stringify(history));
+            loadHistory();
+        }
+
+        function downloadData() {
+            const result = document.getElementById('result').innerText;
+            const timestamp = new Date().toLocaleString();
+            const data = `Product Cost Calculation (${timestamp})\n\n${result}`;
+            
+            const blob = new Blob([data], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cost-calculation-${new Date().toISOString().slice(0,10)}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        function calculate() {
+            const directCosts = parseFloat(document.getElementById('directCosts').value) || 0;
+            const indirectCosts = parseFloat(document.getElementById('indirectCosts').value) || 0;
+            const laborCosts = parseFloat(document.getElementById('laborCosts').value) || 0;
+            const miscCosts = parseFloat(document.getElementById('miscCosts').value) || 0;
+            const units = parseInt(document.getElementById('units').value) || 0;
+            const taxRate = parseFloat(document.getElementById('tax').value) || 0;
+
+            if (units === 0) {
+                document.getElementById('result').innerHTML = "<p>Please enter the number of units.</p>";
+                return;
+            }
+
+            const subtotal = directCosts + indirectCosts + laborCosts + miscCosts;
+            const costPerUnit = subtotal / units;
+            const tax = subtotal * (taxRate / 100);
+            const total = subtotal + tax;
+            const totalPerUnit = total / units;
+
+            // Save calculation to history
+            saveCalculation({
+                directCosts,
+                indirectCosts,
+                laborCosts,
+                miscCosts,
+                units,
+                taxRate,
+                subtotal,
+                tax,
+                total,
+                totalPerUnit
+            });
+
+
+
+
+
+
+        // function calculate() {
+        //     const directCosts = parseFloat(document.getElementById('directCosts').value) || 0;
+        //     const indirectCosts = parseFloat(document.getElementById('indirectCosts').value) || 0;
+        //     const laborCosts = parseFloat(document.getElementById('laborCosts').value) || 0;
+        //     const miscCosts = parseFloat(document.getElementById('miscCosts').value) || 0;
+        //     const units = parseInt(document.getElementById('units').value) || 0;
+        //     const taxRate = parseFloat(document.getElementById('tax').value) || 0;
+
+        //     if (units === 0) {
+        //         document.getElementById('result').innerHTML = "<p>Please enter the number of units.</p>";
+        //         return;
+        //     }
+
+        //     const subtotal = directCosts + indirectCosts + laborCosts + miscCosts;
+        //     const costPerUnit = subtotal / units;
+        //     const tax = subtotal * (taxRate / 100);
+        //     const total = subtotal + tax;
+        //     const totalPerUnit = total / units;
+
+             document.getElementById('result').innerHTML = `
+                <div class="result-row">
+                    <p><strong>Total Direct Costs:</strong> <span class="result-value">$${directCosts.toFixed(2)}</span></p>
+                </div>
+                <div class="result-row">
+                    <p><strong>Total Indirect Costs:</strong> <span class="result-value">$${indirectCosts.toFixed(2)}</span></p>
+                </div>
+                <div class="result-row">
+                    <p><strong>Total Labor Costs:</strong> <span class="result-value">$${laborCosts.toFixed(2)}</span></p>
+                </div>
+                <div class="result-row">
+                    <p><strong>Total Misc Costs:</strong> <span class="result-value">$${miscCosts.toFixed(2)}</span></p>
+                </div>
+                <div class="result-row">
+                    <p><strong>Subtotal:</strong> <span class="result-value">$${subtotal.toFixed(2)}</span></p>
+                </div>
+                <div class="result-row">
+                    <p><strong>Tax (${taxRate}%):</strong> <span class="result-value">$${tax.toFixed(2)}</span></p>
+                </div>
+                <div class="result-row">
+                    <p><strong>Total Cost:</strong> <span class="result-value">$${total.toFixed(2)}</span></p>
+                </div>
+                <div class="result-row">
+                    <p><strong>Cost Per Unit:</strong> <span class="result-value">$${totalPerUnit.toFixed(2)}</span></p>
+                </div>
+            `;
+
+            drawChart(directCosts, indirectCosts, laborCosts, miscCosts, tax);
+        }
+
+        function clearFields() {
+            document.getElementById('directCosts').value = '';
+            document.getElementById('indirectCosts').value = '';
+            document.getElementById('laborCosts').value = '';
+            document.getElementById('miscCosts').value = '';
+            document.getElementById('units').value = '';
+            document.getElementById('tax').value = '';
+            document.getElementById('result').innerHTML = '';
+            const ctx = document.getElementById('costBreakdownChart');
+            ctx.getContext('2d').clearRect(0, 0, ctx.width, ctx.height);
+        }
+
+        function drawChart(direct, indirect, labor, misc, tax) {
+            const ctx = document.getElementById('costBreakdownChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Direct Costs', 'Indirect Costs', 'Labor Costs', 'Misc Costs', 'Tax'],
+                    datasets: [{
+                        data: [direct, indirect, labor, misc, tax],
+                        backgroundColor: ['#36a2eb', '#ff6384', '#4bc0c0', '#ff9f40', '#9966ff']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        // // Restore data when the page loads
+        // window.onload = restorePreviousData;
+
+    </script>
+</body>
+</html>
